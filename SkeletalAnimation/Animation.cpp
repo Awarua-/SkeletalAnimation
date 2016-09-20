@@ -11,14 +11,15 @@ using namespace std;
 
 const aiScene* scene = NULL;
 GLuint scene_list = 0;
-float angle = 0;
 aiVector3D scene_min, scene_max, scene_center;
-bool modelRotn = true;
+float secsPerTick = NULL;
+unsigned int tick = 0;
 
 bool loadModel(const char* fileName)
 {
 	scene = aiImportFile(fileName, aiProcessPreset_TargetRealtime_MaxQuality);
 	if (scene == NULL) exit(1);
+	secsPerTick = 1.0 / scene->mAnimations[0]->mTicksPerSecond;
 	//	printSceneInfo(scene);
 	//	printTreeInfo(scene->mRootNode);
 	get_bounding_box(scene, &scene_min, &scene_max);
@@ -32,11 +33,11 @@ void render(const aiScene* sc, const aiNode* nd)
 	aiMesh* mesh;
 	aiFace* face;
 
-	aiTransposeMatrix4(&m);   //Convert to column-major order
+	aiTransposeMatrix4(&m); //Convert to column-major order
 	glPushMatrix();
-	glMultMatrixf((float*)&m);   //Multiply by the transformation matrix for this node
+	glMultMatrixf((float*)&m); //Multiply by the transformation matrix for this node
 
-								 // Draw all meshes assigned to this node
+	// Draw all meshes assigned to this node
 	for (int n = 0; n < nd->mNumMeshes; n++)
 	{
 		mesh = scene->mMeshes[nd->mMeshes[n]];
@@ -62,15 +63,20 @@ void render(const aiScene* sc, const aiNode* nd)
 
 			switch (face->mNumIndices)
 			{
-			case 1: face_mode = GL_POINTS; break;
-			case 2: face_mode = GL_LINES; break;
-			case 3: face_mode = GL_TRIANGLES; break;
-			default: face_mode = GL_POLYGON; break;
+			case 1: face_mode = GL_POINTS;
+				break;
+			case 2: face_mode = GL_LINES;
+				break;
+			case 3: face_mode = GL_TRIANGLES;
+				break;
+			default: face_mode = GL_POLYGON;
+				break;
 			}
 
 			glBegin(face_mode);
 
-			for (int i = 0; i < face->mNumIndices; i++) {
+			for (int i = 0; i < face->mNumIndices; i++)
+			{
 				int index = face->mIndices[i];
 				if (mesh->HasVertexColors(0))
 				{
@@ -87,7 +93,6 @@ void render(const aiScene* sc, const aiNode* nd)
 
 			glEnd();
 		}
-
 	}
 
 	// Draw all children
@@ -108,7 +113,7 @@ void initialise()
 	glEnable(GL_NORMALIZE);
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 	glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
-	loadModel("Model Files/wuson.x");			//<<<-------------Specify input file name here
+	loadModel("BVH_Files/Dance.bvh"); //<<<-------------Specify input file name here
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(45, 1, 1.0, 1000.0);
@@ -117,17 +122,30 @@ void initialise()
 //----Timer callback for continuous rotation of the model about y-axis----
 void update(int value)
 {
-	angle++;
-	if (angle > 360) angle = 0;
+	auto anim = scene->mAnimations[0];
+//	if (tick % 4 == 0) {
+//		auto node = scene->mRootNode;
+//		auto oNode = node->mChildren[0];
+//		auto nodeT = node->mTransformation;
+//		node->mTransformation = oNode->mTransformation;
+//		oNode->mTransformation = nodeT;
+//	}
+	for (size_t i = 0; i < anim->mNumChannels; i++)
+	{
+		auto chnl = anim->mChannels[i];
+		auto posn = chnl->mPositionKeys[tick].mValue;
+		auto rotn = chnl->mRotationKeys[tick].mValue;
+		auto matPos = aiMatrix4x4();
+		matPos.Translation(posn, matPos);
+		auto matRotn3 = rotn.GetMatrix();
+		auto matRot = aiMatrix4x4(matRotn3);
+		auto matprod = matPos * matRot;
+		auto node = scene->mRootNode->FindNode(chnl->mNodeName);
+		node->mTransformation = matprod;
+	}
+	tick = (tick + 1) % static_cast<int>(anim->mDuration);
 	glutPostRedisplay();
-	glutTimerFunc(50, update, 0);
-}
-
-//----Keyboard callback to toggle initial model orientation---
-void keyboard(unsigned char key, int x, int y)
-{
-	if (key == '1') modelRotn = !modelRotn;   //Enable/disable initial model rotation
-	glutPostRedisplay();
+	glutTimerFunc(secsPerTick * 1000, update, 0);
 }
 
 //------The main display function---------
@@ -135,7 +153,7 @@ void keyboard(unsigned char key, int x, int y)
 //    stored for subsequent display updates.
 void display()
 {
-	float pos[4] = { 50, 50, 50, 1 };
+	float pos[4] = {50, 50, 50, 1};
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glMatrixMode(GL_MODELVIEW);
@@ -143,10 +161,7 @@ void display()
 	gluLookAt(0, 0, 3, 0, 0, -5, 0, 1, 0);
 	glLightfv(GL_LIGHT0, GL_POSITION, pos);
 
-	glRotatef(angle, 0.f, 1.f, 0.f);  //Continuous rotation about the y-axis
-	if (modelRotn) glRotatef(-90, 1, 0, 0);		  //First, rotate the model about x-axis if needed.
-
-												  // scale the whole asset to fit into our view frustum 
+	// scale the whole asset to fit into our view frustum 
 	float tmp = scene_max.x - scene_min.x;
 	tmp = aisgl_max(scene_max.y - scene_min.y, tmp);
 	tmp = aisgl_max(scene_max.z - scene_min.z, tmp);
@@ -156,24 +171,17 @@ void display()
 	// center the model
 	glTranslatef(-scene_center.x, -scene_center.y, -scene_center.z);
 
-	// if the display list has not been made yet, create a new one and
-	// fill it with scene contents
-	if (scene_list == 0)
-	{
-		scene_list = glGenLists(1);
-		glNewList(scene_list, GL_COMPILE);
-		// now begin at the root node of the imported data and traverse
-		// the scenegraph by multiplying subsequent local transforms
-		// together on GL's matrix stack.
-		render(scene, scene->mRootNode);
-		glEndList();
-	}
+
+	scene_list = glGenLists(1);
+	glNewList(scene_list, GL_COMPILE);
+
+	render(scene, scene->mRootNode);
+	glEndList();
 
 	glCallList(scene_list);
 
 	glutSwapBuffers();
 }
-
 
 
 int main(int argc, char** argv)
@@ -187,8 +195,8 @@ int main(int argc, char** argv)
 
 	initialise();
 	glutDisplayFunc(display);
-	glutTimerFunc(50, update, 0);
-	glutKeyboardFunc(keyboard);
+	glutTimerFunc(secsPerTick * 1000, update, 0);
+	//	glutKeyboardFunc();
 	glutMainLoop();
 
 	aiReleaseImport(scene);
