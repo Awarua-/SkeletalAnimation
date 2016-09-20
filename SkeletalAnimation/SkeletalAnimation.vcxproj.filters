@@ -14,4 +14,27 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Animation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+    <None Include="BVH_Files\01_01.bvh" />
+    <None Include="BVH_Files\Dance.bvh" />
+    <None Include="BVH_Files\Test.bvh" />
+    <None Include="Model Files\dwarf.x" />
+    <None Include="Model Files\wuson.x" />
+    <None Include="Model Files\HellBoy.mtl" />
+    <None Include="Model Files\Man.3ds" />
+    <None Include="Model Files\Noodle.mtl" />
+    <None Include="Model Files\bird.mtl" />
+    <None Include="Model Files\Car.3ds" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="assimp_extras.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>
