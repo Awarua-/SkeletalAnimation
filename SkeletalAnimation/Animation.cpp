@@ -1,5 +1,7 @@
 #include <iostream>
 #include <GL/freeglut.h>
+#include "Camera.h"
+#include "Stage.h"
 
 using namespace std;
 
@@ -9,19 +11,27 @@ using namespace std;
 #include <assimp/postprocess.h>
 #include "assimp_extras.h"
 
-const aiScene* scene = NULL;
+const aiScene* person;
+const aiScene* thing;
 GLuint scene_list = 0;
 aiVector3D scene_min, scene_max, scene_center;
 float secsPerTick = NULL;
 unsigned int tick = 0;
+Camera camera;
+Stage* stage = new Stage();
 
-bool loadModel(const char* fileName)
+#define HALF_WIDTH 300
+#define HALF_DEPTH 200
+
+const aiScene* loadModel(const char* fileName, bool isAnimation)
 {
-	scene = aiImportFile(fileName, aiProcessPreset_TargetRealtime_MaxQuality);
+	auto scene = aiImportFile(fileName, aiProcessPreset_TargetRealtime_MaxQuality);
 	if (scene == NULL) exit(1);
-	secsPerTick = 1.0 / scene->mAnimations[0]->mTicksPerSecond;
-	get_bounding_box(scene, &scene_min, &scene_max);
-	return true;
+	if (isAnimation) {
+		secsPerTick = 1.0 / scene->mAnimations[0]->mTicksPerSecond;
+		get_bounding_box(scene, &scene_min, &scene_max);
+	}
+	return scene;
 }
 
 void render(const aiScene* sc, const aiNode* nd) // 
@@ -37,7 +47,7 @@ void render(const aiScene* sc, const aiNode* nd) //
 	// Draw all meshes assigned to this node
 	for (int n = 0; n < nd->mNumMeshes; n++)
 	{
-		mesh = scene->mMeshes[nd->mMeshes[n]];
+		mesh = sc->mMeshes[nd->mMeshes[n]];
 
 		apply_material(sc->mMaterials[mesh->mMaterialIndex]);
 
@@ -108,15 +118,29 @@ void initialise()
 	glEnable(GL_NORMALIZE);
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 	glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
-	loadModel("BVH_Files/Dance.bvh"); //<<<-------------Specify input file name here
+	person = loadModel("BVH_Files/Dance.bvh", true);
+	thing = loadModel("Model_Files/Scene/Street_environment_V01.obj", false);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(45, 1, 1.0, 1000.0);
+
+
+	// Setup Camera 
+	camera = Camera();
+
+	glutKeyboardFunc(Camera::keyPressed);
+	glutKeyboardUpFunc(Camera::keyUp);
+	glutSpecialFunc(Camera::specialKeyPressed);
+	glutSpecialUpFunc(Camera::specialKeyUp);
+	glutMotionFunc(Camera::mouseDrag);
+	glutPassiveMotionFunc(Camera::mouseMove);
+	glutMouseFunc(Camera::mouseClick);
+	glutMouseWheelFunc(Camera::mouseScroll);
 }
 
 void update(int value)
 {
-	auto anim = scene->mAnimations[0];
+	auto anim = person->mAnimations[0];
 	for (int i = 0; i < anim->mNumChannels; i++)
 	{
 		auto chnl = anim->mChannels[i];
@@ -127,7 +151,7 @@ void update(int value)
 		auto matRotn3 = rotn.GetMatrix();
 		auto matRot = aiMatrix4x4(matRotn3);
 		auto matprod = matPos * matRot;
-		auto node = scene->mRootNode->FindNode(chnl->mNodeName);
+		auto node = person->mRootNode->FindNode(chnl->mNodeName);
 		node->mTransformation = matprod;
 	}
 	tick = (tick + 1) % static_cast<int>(anim->mDuration);
@@ -142,7 +166,8 @@ void display()
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	gluLookAt(0, 0, 3, 0, 0, -5, 0, 1, 0);
+	camera.apply();
+//	gluLookAt(0, 0, 3, 0, 0, -5, 0, 1, 0);
 	glLightfv(GL_LIGHT0, GL_POSITION, pos);
 
 	// scale the whole asset to fit into our view frustum 
@@ -155,14 +180,14 @@ void display()
 	// center the model
 	glTranslatef(-scene_center.x, -scene_center.y, -scene_center.z);
 
+//	stage->display();
 
-	scene_list = glGenLists(1);
-	glNewList(scene_list, GL_COMPILE);
+	render(person, person->mRootNode);
+	glPushMatrix();
+	glScalef(25, 25, 25);
+	render(thing, thing->mRootNode);
+	glPopMatrix();
 
-	render(scene, scene->mRootNode);
-	glEndList();
-
-	glCallList(scene_list);
 
 	glutSwapBuffers();
 }
@@ -182,5 +207,7 @@ int main(int argc, char** argv)
 	glutTimerFunc(secsPerTick * 1000, update, 0);
 	glutMainLoop();
 
-	aiReleaseImport(scene);
+	aiReleaseImport(person);
+	aiReleaseImport(thing);
+	delete stage;
 }
