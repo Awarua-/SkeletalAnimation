@@ -20,14 +20,11 @@ bool loadModel(const char* fileName)
 	scene = aiImportFile(fileName, aiProcessPreset_TargetRealtime_MaxQuality);
 	if (scene == NULL) exit(1);
 	secsPerTick = 1.0 / scene->mAnimations[0]->mTicksPerSecond;
-	//	printSceneInfo(scene);
-	//	printTreeInfo(scene->mRootNode);
 	get_bounding_box(scene, &scene_min, &scene_max);
 	return true;
 }
 
-// ------A recursive function to traverse scene graph and render each mesh----------
-void render(const aiScene* sc, const aiNode* nd)
+void render(const aiScene* sc, const aiNode* nd) // 
 {
 	aiMatrix4x4 m = nd->mTransformation;
 	aiMesh* mesh;
@@ -99,11 +96,9 @@ void render(const aiScene* sc, const aiNode* nd)
 	for (int i = 0; i < nd->mNumChildren; i++)
 		render(sc, nd->mChildren[i]);
 
-
 	glPopMatrix();
 }
 
-//--------------------OpenGL initialization------------------------
 void initialise()
 {
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -119,22 +114,14 @@ void initialise()
 	gluPerspective(45, 1, 1.0, 1000.0);
 }
 
-//----Timer callback for continuous rotation of the model about y-axis----
 void update(int value)
 {
 	auto anim = scene->mAnimations[0];
-//	if (tick % 4 == 0) {
-//		auto node = scene->mRootNode;
-//		auto oNode = node->mChildren[0];
-//		auto nodeT = node->mTransformation;
-//		node->mTransformation = oNode->mTransformation;
-//		oNode->mTransformation = nodeT;
-//	}
-	for (size_t i = 0; i < anim->mNumChannels; i++)
+	for (int i = 0; i < anim->mNumChannels; i++)
 	{
 		auto chnl = anim->mChannels[i];
-		auto posn = chnl->mPositionKeys[tick].mValue;
-		auto rotn = chnl->mRotationKeys[tick].mValue;
+		auto posn = chnl->mPositionKeys[tick % chnl->mNumPositionKeys].mValue;
+		auto rotn = chnl->mRotationKeys[tick % chnl->mNumRotationKeys].mValue;
 		auto matPos = aiMatrix4x4();
 		matPos.Translation(posn, matPos);
 		auto matRotn3 = rotn.GetMatrix();
@@ -148,9 +135,6 @@ void update(int value)
 	glutTimerFunc(secsPerTick * 1000, update, 0);
 }
 
-//------The main display function---------
-//----The model is first drawn using a display list so that all GL commands are
-//    stored for subsequent display updates.
 void display()
 {
 	float pos[4] = {50, 50, 50, 1};
@@ -196,7 +180,6 @@ int main(int argc, char** argv)
 	initialise();
 	glutDisplayFunc(display);
 	glutTimerFunc(secsPerTick * 1000, update, 0);
-	//	glutKeyboardFunc();
 	glutMainLoop();
 
 	aiReleaseImport(scene);
