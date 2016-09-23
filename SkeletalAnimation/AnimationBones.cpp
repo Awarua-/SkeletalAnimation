@@ -34,20 +34,37 @@ const aiScene* loadModel(const char* fileName, bool isAnimation)
 	return scene;
 }
 
-void render(const aiScene* sc, const aiNode* nd) // 
+void render(const aiScene* sc) // 
 {
-	aiMatrix4x4 m = nd->mTransformation;
+	aiMatrix4x4 m;
 	aiMesh* mesh;
 	aiFace* face;
+	aiBone* bone;
 
-	aiTransposeMatrix4(&m); //Convert to column-major order
-	glPushMatrix();
-	glMultMatrixf((float*)&m); //Multiply by the transformation matrix for this node
+	//aiTransposeMatrix4(&m); //Convert to column-major order
+	//glPushMatrix();
+	//glMultMatrixf((float*)&m); //Multiply by the transformation matrix for this node
 
 	// Draw all meshes assigned to this node
-	for (int n = 0; n < nd->mNumMeshes; n++)
+	for (auto i = 0; i < sc->mNumMeshes; i++)
 	{
-		mesh = sc->mMeshes[nd->mMeshes[n]];
+		unsigned long long foo = 0;
+		mesh = sc->mMeshes[i];
+		for (auto j = 0; j < mesh->mNumBones; j++)
+		{
+			bone = mesh->mBones[j];
+			aiMatrix4x4 offset = bone->mOffsetMatrix;
+			glPushMatrix();
+			glMultMatrixf(reinterpret_cast<float*>(&offset));
+			aiNode* nd = sc->mRootNode->FindNode(bone->mName);
+			m = nd->mTransformation;
+			aiTransposeMatrix4(&m); //Convert to column-major order
+			glPushMatrix();
+			glMultMatrixf(reinterpret_cast<float*>(&m)); //Multiply by the transformation matrix for this node
+			glPushMatrix();
+			glMultMatrixf(reinterpret_cast<float*>(&offset.Inverse()));
+			foo += 2;
+		}
 
 		apply_material(sc->mMaterials[mesh->mMaterialIndex]);
 
@@ -89,7 +106,7 @@ void render(const aiScene* sc, const aiNode* nd) //
 				{
 					glEnable(GL_COLOR_MATERIAL);
 					glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
-					glColor4fv((GLfloat*)&mesh->mColors[0][index]);
+					glColor4fv(reinterpret_cast<GLfloat*>(&mesh->mColors[0][index]));
 				}
 				else
 					glDisable(GL_COLOR_MATERIAL);
@@ -100,13 +117,12 @@ void render(const aiScene* sc, const aiNode* nd) //
 
 			glEnd();
 		}
+
+		for (auto l = 0; l < foo; l++)
+			glPopMatrix();
 	}
 
-	// Draw all children
-	for (int i = 0; i < nd->mNumChildren; i++)
-		render(sc, nd->mChildren[i]);
-
-	glPopMatrix();
+	//glPopMatrix();
 }
 
 void initialise()
@@ -118,8 +134,8 @@ void initialise()
 	glEnable(GL_NORMALIZE);
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 	glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
-	person = loadModel("BVH_Files/Dance.bvh", true);
-	thing = loadModel("Model_Files/Scene/Street_environment_V01.obj", false);
+	person = loadModel("Model_Files/dwarf.x", true);
+	//thing = loadModel("Model_Files/Scene/Street_environment_V01.obj", false);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(45, 1, 1.0, 1000.0);
@@ -182,10 +198,10 @@ void display()
 
 //	stage->display();
 
-	render(person, person->mRootNode);
+	render(person);
 	glPushMatrix();
 	glScalef(25, 25, 25);
-	render(thing, thing->mRootNode);
+	//render(thing, thing->mRootNode);
 	glPopMatrix();
 
 
@@ -193,7 +209,7 @@ void display()
 }
 
 
-int mainf(int argc, char** argv)
+int main(int argc, char** argv)
 {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
@@ -208,7 +224,6 @@ int mainf(int argc, char** argv)
 	glutMainLoop();
 
 	aiReleaseImport(person);
-	aiReleaseImport(thing);
+	//aiReleaseImport(thing);
 	delete stage;
-	return 0;
 }

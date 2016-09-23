@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Animation.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -25,6 +22,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Stage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationBones.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -80,8 +80,5 @@
     </Image>
     <Image Include="Model_Files\Scene\textures\building03_c.tga" />
     <Image Include="Model_Files\Scene\textures\building05_c.tga" />
-  </ItemGroup>
-  <ItemGroup>
-    <Object Include="Model_Files\Scene\Street_environment_V01.obj" />
   </ItemGroup>
 </Project>

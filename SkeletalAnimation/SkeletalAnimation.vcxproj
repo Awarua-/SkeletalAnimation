@@ -146,7 +146,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="AnimationBones.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="SceneObject.cpp" />
     <ClCompile Include="Stage.cpp" />
@@ -191,9 +191,6 @@
     <Image Include="Model_Files\Scene\textures\building_06_c.tga" />
     <Image Include="Model_Files\Scene\textures\Building_V01_C.png" />
     <Image Include="Model_Files\Scene\textures\Building_V02_C.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Object Include="Model_Files\Scene\Street_environment_V01.obj" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
