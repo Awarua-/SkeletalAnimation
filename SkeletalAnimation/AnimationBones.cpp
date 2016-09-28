@@ -49,11 +49,11 @@ const aiScene* loadModel(const char* fileName, bool isAnimation)
 	return scene;
 }
 
-void render(const aiScene* sc) // 
+void updateVerts(const aiScene* sc) // 
 {
 //	aiMatrix4x4 m;
 	aiMesh* mesh;
-	aiFace* face;
+//	aiFace* face;
 	aiBone* bone;
 
 	//aiTransposeMatrix4(&m); //Convert to column-major order
@@ -77,6 +77,7 @@ void render(const aiScene* sc) //
 			} while (node != nullptr);
 			auto transposeMatrix = fullTransformationMatrix;
 			transposeMatrix.Transpose();
+			transposeMatrix.Inverse();
 
 			for (auto k = 0; k < bone->mNumWeights; k++)
 			{
@@ -86,57 +87,57 @@ void render(const aiScene* sc) //
 			}
 		}
 
-		apply_material(sc->mMaterials[mesh->mMaterialIndex]);
-
-		if (mesh->HasNormals())
-			glEnable(GL_LIGHTING);
-		else
-			glDisable(GL_LIGHTING);
-
-
-		if (mesh->HasVertexColors(0))
-			glEnable(GL_COLOR_MATERIAL);
-		else
-			glDisable(GL_COLOR_MATERIAL);
-
-		//Get the polygons from each mesh and draw them
-		for (auto k = 0; k < mesh->mNumFaces; k++)
-		{
-			face = &mesh->mFaces[k];
-			GLenum face_mode;
-
-			switch (face->mNumIndices)
-			{
-			case 1: face_mode = GL_POINTS;
-				break;
-			case 2: face_mode = GL_LINES;
-				break;
-			case 3: face_mode = GL_TRIANGLES;
-				break;
-			default: face_mode = GL_POLYGON;
-				break;
-			}
-
-			glBegin(face_mode);
-
-			for (auto l = 0; l < face->mNumIndices; l++)
-			{
-				int index = face->mIndices[l];
-				if (mesh->HasVertexColors(0))
-				{
-					glEnable(GL_COLOR_MATERIAL);
-					glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
-					glColor4fv(reinterpret_cast<GLfloat*>(&mesh->mColors[0][index]));
-				}
-				else
-					glDisable(GL_COLOR_MATERIAL);
-				if (mesh->HasNormals())
-					glNormal3fv(&mesh->mNormals[index].x);
-				glVertex3fv(&mesh->mVertices[index].x);
-			}
-
-			glEnd();
-		}
+//		apply_material(sc->mMaterials[mesh->mMaterialIndex]);
+//
+//		if (mesh->HasNormals())
+//			glEnable(GL_LIGHTING);
+//		else
+//			glDisable(GL_LIGHTING);
+//
+//
+//		if (mesh->HasVertexColors(0))
+//			glEnable(GL_COLOR_MATERIAL);
+//		else
+//			glDisable(GL_COLOR_MATERIAL);
+//
+//		//Get the polygons from each mesh and draw them
+//		for (auto k = 0; k < mesh->mNumFaces; k++)
+//		{
+//			face = &mesh->mFaces[k];
+//			GLenum face_mode;
+//
+//			switch (face->mNumIndices)
+//			{
+//			case 1: face_mode = GL_POINTS;
+//				break;
+//			case 2: face_mode = GL_LINES;
+//				break;
+//			case 3: face_mode = GL_TRIANGLES;
+//				break;
+//			default: face_mode = GL_POLYGON;
+//				break;
+//			}
+//
+//			glBegin(face_mode);
+//
+//			for (auto l = 0; l < face->mNumIndices; l++)
+//			{
+//				int index = face->mIndices[l];
+//				if (mesh->HasVertexColors(0))
+//				{
+//					glEnable(GL_COLOR_MATERIAL);
+//					glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
+//					glColor4fv(reinterpret_cast<GLfloat*>(&mesh->mColors[0][index]));
+//				}
+//				else
+//					glDisable(GL_COLOR_MATERIAL);
+//				if (mesh->HasNormals())
+//					glNormal3fv(&mesh->mNormals[index].x);
+//				glVertex3fv(&mesh->mVertices[index].x);
+//			}
+//
+//			glEnd();
+//		}
 
 		off += mesh->mNumVertices;
 	}
@@ -194,6 +195,81 @@ void update(int value)
 	glutTimerFunc(secsPerTick * 1000, update, 0);
 }
 
+void render(const aiScene* sc, const aiNode* nd) // 
+{
+	aiMatrix4x4 m = nd->mTransformation;
+	aiMesh* mesh;
+	aiFace* face;
+
+	aiTransposeMatrix4(&m); //Convert to column-major order
+	glPushMatrix();
+	glMultMatrixf((float*)&m); //Multiply by the transformation matrix for this node
+
+							   // Draw all meshes assigned to this node
+	for (int n = 0; n < nd->mNumMeshes; n++)
+	{
+		mesh = sc->mMeshes[nd->mMeshes[n]];
+
+		apply_material(sc->mMaterials[mesh->mMaterialIndex]);
+
+		if (mesh->HasNormals())
+			glEnable(GL_LIGHTING);
+		else
+			glDisable(GL_LIGHTING);
+
+
+		if (mesh->HasVertexColors(0))
+			glEnable(GL_COLOR_MATERIAL);
+		else
+			glDisable(GL_COLOR_MATERIAL);
+
+		//Get the polygons from each mesh and draw them
+		for (int k = 0; k < mesh->mNumFaces; k++)
+		{
+			face = &mesh->mFaces[k];
+			GLenum face_mode;
+
+			switch (face->mNumIndices)
+			{
+			case 1: face_mode = GL_POINTS;
+				break;
+			case 2: face_mode = GL_LINES;
+				break;
+			case 3: face_mode = GL_TRIANGLES;
+				break;
+			default: face_mode = GL_POLYGON;
+				break;
+			}
+
+			glBegin(face_mode);
+
+			for (int i = 0; i < face->mNumIndices; i++)
+			{
+				int index = face->mIndices[i];
+				if (mesh->HasVertexColors(0))
+				{
+					glEnable(GL_COLOR_MATERIAL);
+					glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
+					glColor4fv((GLfloat*)&mesh->mColors[0][index]);
+				}
+				else
+					glDisable(GL_COLOR_MATERIAL);
+				if (mesh->HasNormals())
+					glNormal3fv(&mesh->mNormals[index].x);
+				glVertex3fv(&mesh->mVertices[index].x);
+			}
+
+			glEnd();
+		}
+	}
+
+	// Draw all children
+	for (int i = 0; i < nd->mNumChildren; i++)
+		render(sc, nd->mChildren[i]);
+
+	glPopMatrix();
+}
+
 void display()
 {
 	float pos[4] = {50, 50, 50, 1};
@@ -217,7 +293,8 @@ void display()
 
 //	stage->display();
 
-	render(person);
+	updateVerts(person);
+	render(person, person->mRootNode);
 	glPushMatrix();
 	glScalef(25, 25, 25);
 	//render(thing, thing->mRootNode);
