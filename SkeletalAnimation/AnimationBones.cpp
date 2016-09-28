@@ -2,6 +2,7 @@
 #include <GL/freeglut.h>
 #include "Camera.h"
 #include "Stage.h"
+#include <vector>
 
 using namespace std;
 
@@ -20,23 +21,37 @@ unsigned int tick = 0;
 Camera camera;
 Stage* stage = new Stage();
 
+
 #define HALF_WIDTH 300
 #define HALF_DEPTH 200
+
+
+vector<aiVector3D> vertices = vector<aiVector3D>();
+
+vector<aiVector3D> normals = vector<aiVector3D>();
 
 const aiScene* loadModel(const char* fileName, bool isAnimation)
 {
 	auto scene = aiImportFile(fileName, aiProcessPreset_TargetRealtime_MaxQuality);
-	if (scene == NULL) exit(1);
+	if (scene == nullptr) exit(1);
 	if (isAnimation) {
-		secsPerTick = 1.0 / scene->mAnimations[0]->mTicksPerSecond;
+		secsPerTick = scene->mAnimations[0]->mTicksPerSecond == 0.0 ? 0.02 : 1.0 / scene->mAnimations[0]->mTicksPerSecond;
 		get_bounding_box(scene, &scene_min, &scene_max);
+	}
+	for (auto i = 0; i < scene->mNumMeshes; i++)
+	{
+		auto mesh = scene->mMeshes[i];
+		for (auto j = 0; j < mesh->mNumVertices; j++) {
+			vertices.push_back(mesh->mVertices[j]);
+			normals.push_back(mesh->mNormals[j]);
+		}
 	}
 	return scene;
 }
 
 void render(const aiScene* sc) // 
 {
-	aiMatrix4x4 m;
+//	aiMatrix4x4 m;
 	aiMesh* mesh;
 	aiFace* face;
 	aiBone* bone;
@@ -44,26 +59,31 @@ void render(const aiScene* sc) //
 	//aiTransposeMatrix4(&m); //Convert to column-major order
 	//glPushMatrix();
 	//glMultMatrixf((float*)&m); //Multiply by the transformation matrix for this node
+	auto off = 0;
 
 	// Draw all meshes assigned to this node
 	for (auto i = 0; i < sc->mNumMeshes; i++)
 	{
-		unsigned long long foo = 0;
 		mesh = sc->mMeshes[i];
 		for (auto j = 0; j < mesh->mNumBones; j++)
 		{
 			bone = mesh->mBones[j];
-			aiMatrix4x4 offset = bone->mOffsetMatrix;
-			glPushMatrix();
-			glMultMatrixf(reinterpret_cast<float*>(&offset));
-			aiNode* nd = sc->mRootNode->FindNode(bone->mName);
-			m = nd->mTransformation;
-			aiTransposeMatrix4(&m); //Convert to column-major order
-			glPushMatrix();
-			glMultMatrixf(reinterpret_cast<float*>(&m)); //Multiply by the transformation matrix for this node
-			glPushMatrix();
-			glMultMatrixf(reinterpret_cast<float*>(&offset.Inverse()));
-			foo += 2;
+			auto fullTransformationMatrix = bone->mOffsetMatrix;
+			auto node = sc->mRootNode->FindNode(bone->mName);
+			do
+			{
+				fullTransformationMatrix = node->mTransformation * fullTransformationMatrix;
+				node = node->mParent;
+			} while (node != nullptr);
+			auto transposeMatrix = fullTransformationMatrix;
+			transposeMatrix.Transpose();
+
+			for (auto k = 0; k < bone->mNumWeights; k++)
+			{
+				auto vid = bone->mWeights[k].mVertexId;
+				mesh->mVertices[vid] = fullTransformationMatrix * vertices[vid + off];
+				mesh->mNormals[vid] = transposeMatrix * normals[vid + off];
+			}
 		}
 
 		apply_material(sc->mMaterials[mesh->mMaterialIndex]);
@@ -80,7 +100,7 @@ void render(const aiScene* sc) //
 			glDisable(GL_COLOR_MATERIAL);
 
 		//Get the polygons from each mesh and draw them
-		for (int k = 0; k < mesh->mNumFaces; k++)
+		for (auto k = 0; k < mesh->mNumFaces; k++)
 		{
 			face = &mesh->mFaces[k];
 			GLenum face_mode;
@@ -99,9 +119,9 @@ void render(const aiScene* sc) //
 
 			glBegin(face_mode);
 
-			for (int i = 0; i < face->mNumIndices; i++)
+			for (auto l = 0; l < face->mNumIndices; l++)
 			{
-				int index = face->mIndices[i];
+				int index = face->mIndices[l];
 				if (mesh->HasVertexColors(0))
 				{
 					glEnable(GL_COLOR_MATERIAL);
@@ -118,8 +138,7 @@ void render(const aiScene* sc) //
 			glEnd();
 		}
 
-		for (auto l = 0; l < foo; l++)
-			glPopMatrix();
+		off += mesh->mNumVertices;
 	}
 
 	//glPopMatrix();
