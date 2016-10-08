@@ -18,9 +18,6 @@
     <ClCompile Include="Stage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AnimationBones.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="AiModel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

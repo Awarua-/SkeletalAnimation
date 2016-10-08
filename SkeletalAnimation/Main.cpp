@@ -15,7 +15,7 @@ AiModel* person;
 unsigned int tick;
 aiVector3D scene_center;
 Stage* stage = new Stage();
-bool boneAnimation = true;
+bool boneAnimation = false;
 
 void initialise()
 {
@@ -85,6 +85,8 @@ void display()
 int main(int argc, char** argv)
 {
 	glutInit(&argc, argv);
+	if (argc == 2)
+		boneAnimation = *argv[1] == '1';
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitWindowSize(600, 600);
 	glutCreateWindow("Assimp Test");
