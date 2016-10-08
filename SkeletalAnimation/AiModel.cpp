@@ -12,7 +12,7 @@ const aiScene* AiModel::loadModel(const char* fileName)
 	auto scene = aiImportFile(fileName, aiProcessPreset_TargetRealtime_MaxQuality);
 	if (scene == nullptr) exit(1);
 	if (isAnimation) {
-		secsPerTick = scene->mAnimations[0]->mTicksPerSecond == 0.0 ? 0.02 : 1.0 / scene->mAnimations[0]->mTicksPerSecond;
+		secsPerTick = (scene->mAnimations[0]->mTicksPerSecond == 0.0 || scene->mAnimations[0]->mTicksPerSecond > 120.5) ? 0.014 : 1.0 / scene->mAnimations[0]->mTicksPerSecond;
 		animDuration = scene->mAnimations[0]->mDuration;
 		get_bounding_box(scene, &scene_min, &scene_max);
 	}
