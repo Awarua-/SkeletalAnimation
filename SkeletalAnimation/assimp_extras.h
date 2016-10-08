@@ -1,11 +1,17 @@
 // ----------------------------------------------------------------------------
 // Helper functions
 //-----------------------------------------------------------------------------
+#include <assimp/scene.h>
+#include <assimp/cimport.h>
+#include <assimp/types.h>
+
+using namespace std;
+
 
 #define aisgl_min(x,y) (x<y?x:y)
 #define aisgl_max(x,y) (y>x?y:x)
 
-void get_bounding_box_for_node (const aiScene* scene, aiNode* nd, aiVector3D* min,  aiVector3D* max, 
+inline void get_bounding_box_for_node (const aiScene* scene, aiNode* nd, aiVector3D* min,  aiVector3D* max, 
 	aiMatrix4x4 trafo)
 {
 	aiMatrix4x4 prev = trafo;
@@ -39,7 +45,7 @@ void get_bounding_box_for_node (const aiScene* scene, aiNode* nd, aiVector3D* mi
 }
 
 // ----------------------------------------------------------------------------
-void get_bounding_box (const aiScene *scene, aiVector3D* min, aiVector3D* max)
+inline void get_bounding_box (const aiScene *scene, aiVector3D* min, aiVector3D* max)
 {
 	aiMatrix4x4 trafo;
 	aiIdentityMatrix4(&trafo);
@@ -50,7 +56,7 @@ void get_bounding_box (const aiScene *scene, aiVector3D* min, aiVector3D* max)
 }
 
 // ----------------------------------------------------------------------------
-void color4_to_float4( aiColor4D *c, float f[4])
+inline void color4_to_float4( aiColor4D *c, float f[4])
 {
 	f[0] = c->r;
 	f[1] = c->g;
@@ -59,7 +65,7 @@ void color4_to_float4( aiColor4D *c, float f[4])
 }
 
 // ----------------------------------------------------------------------------
-void set_float4(float f[4], float a, float b, float c, float d)
+inline void set_float4(float f[4], float a, float b, float c, float d)
 {
 	f[0] = a;
 	f[1] = b;
@@ -68,7 +74,7 @@ void set_float4(float f[4], float a, float b, float c, float d)
 }
 
 // ----------------------------------------------------------------------------
-void apply_material(aiMaterial *mtl)
+inline void apply_material(aiMaterial *mtl)
 {
 	float c[4];
 
@@ -126,9 +132,9 @@ void apply_material(aiMaterial *mtl)
 }
 
 
-void printSceneInfo(const aiScene* scene)
+inline void printSceneInfo(const aiScene* scene)
 {
-	if(scene != NULL)
+	if(scene != nullptr)
 	{
 		cout << "Success! "<< endl;
 		cout << "---------------- Scene Data -------------------" << endl;
@@ -140,9 +146,9 @@ void printSceneInfo(const aiScene* scene)
 		cout << "Number of textures = " << scene->mNumTextures << endl;
 		cout << "--------------------------------------" << endl;
 		int nd = scene->mNumMeshes;
-		for (int n = 0; n < scene->mNumMeshes; ++n)
+		for (auto n = 0; n < scene->mNumMeshes; ++n)
 		{
-			aiMesh* mesh = scene->mMeshes[n];
+			auto mesh = scene->mMeshes[n];
 			cout << "Mesh " << n << ": nverts, nfaces = " << mesh->mNumVertices << " " <<
 				mesh->mNumFaces << "  Material index = " << mesh->mMaterialIndex <<  endl;
 		}
@@ -153,19 +159,20 @@ void printSceneInfo(const aiScene* scene)
 }
 
 
-void printTreeInfo(const aiNode* node)
+inline void printTreeInfo(const aiNode* node)
 {
-	float* mat = new float[16];
+	auto mat = new float[16];
 	cout << "============= Node Data ========================" << endl;
 	cout << "Number of children = " << node->mNumChildren << endl;
 	cout << "Number of meshes = " <<  node->mNumMeshes << endl;
-	for (int n = 0; n < node->mNumMeshes; n++) cout << node->mMeshes[n] << " " ;
+	for (auto n = 0; n < node->mNumMeshes; n++) cout << node->mMeshes[n] << " " ;
 	cout << endl;
 	cout << "Transformation:  " ;
-	mat = (float *)&(node->mTransformation.a1);
-	for (int n = 0; n < 16; ++n) cout << mat[n] << " " ;
+	mat = const_cast<float *>(&(node->mTransformation.a1));
+	for (auto n = 0; n < 16; ++n) cout << mat[n] << " " ;
 	cout << endl;
 
-	for (int n = 0; n < node->mNumChildren; n++)
+	for (auto n = 0; n < node->mNumChildren; n++)
 		printTreeInfo(node->mChildren[n]);
 }
+

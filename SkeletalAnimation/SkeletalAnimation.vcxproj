@@ -146,9 +146,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AiModel.cpp" />
     <ClCompile Include="AnimationBones.cpp" />
-    <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="SceneObject.cpp" />
+    <ClCompile Include="Main.cpp" />
     <ClCompile Include="Stage.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -176,9 +176,8 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AiModel.h" />
     <ClInclude Include="assimp_extras.h" />
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="SceneObject.h" />
     <ClInclude Include="Stage.h" />
   </ItemGroup>
   <ItemGroup>
