@@ -1,8 +1,6 @@
 #include "Camera.h" 
-#include <glm/gtc/matrix_transform.inl> 
-#include <GL/freeglut_std.h> 
 
-float Camera::moveSpeed = 1;
+float Camera::moveSpeed = 0.2;
 float Camera::mouseSensitivity = 0.0005;
 
 static bool* keyStates = new bool[256];
@@ -16,28 +14,15 @@ float Camera::verticalAngle = 0.0f;
 float Camera::horizontalAngle = 3.14f;
 float Camera::initialFoV = 70.0f;
 float Camera::fov = initialFoV;
-int Camera::windowWidth = 500;
-int Camera::windowHeight = 500;
 bool Camera::mouseLock = false;
-//bool Camera::wireframe = false;
+int Camera::windowWidth = 600;
+int Camera::windowHeight = 600;
 
 Camera::Camera()
 {
-	glutGetWindow();
-//	windowWidth = glutGet(GLenum(GLUT_WINDOW_X)); 
-//	windowHeight = glutGet(GLenum(GLUT_WINDOW_Y)); 
-	windowWidth = 600;
-	windowHeight = 600;
-	pos = { 0, 0.5, 5 };
+	pos = {0, 0.5, 5};
 	mouseLock = true;
-	wireframe = true;
-
 	proj = glm::perspective(float(glm::radians(20.0)), 1.0f, 10.0f, 1000.0f);
-}
-
-void Camera::toggleMouseLock()
-{
-	mouseLock = !mouseLock;
 }
 
 void Camera::apply()
@@ -59,32 +44,22 @@ void Camera::apply()
 	else if (rz / 360 < -1)
 		rz += 360;
 
-	glm::mat4 matrix = glm::mat4(1.0);
-
-	glm::mat4 rotationx = rotate(matrix, glm::radians(float(rx)), glm::vec3(1, 0, 0));
-	glm::mat4 rotationy = rotate(rotationx, glm::radians(float(ry)), glm::vec3(0, 1, 0));
-	glm::mat4 rotationz = rotate(rotationy, glm::radians(float(rz)), glm::vec3(0, 0, 1));
-
 	proj = glm::perspective(float(glm::radians(fov)), 4.0f / 3.0f, 0.1f, 1000.0f);
-	auto foo = pos + direction();
-	gluLookAt(pos[0], pos[1], pos[2], foo[0], foo[1], foo[2], upVec[0], upVec[1], upVec[2]);
+	auto vec = pos + direction();
+	gluLookAt(pos[0], pos[1], pos[2], vec[0], vec[1], vec[2], upVec[0], upVec[1], upVec[2]);
 
 	//reset mouse position 
-	if (mouseLock) {
+	if (mouseLock)
+	{
 		glutWarpPointer(windowWidth / 2, windowHeight / 2);
 	}
-}
-
-glm::mat4 Camera::getView()
-{
-	return view;
 }
 
 glm::vec3 Camera::direction() const
 {
 	return glm::vec3(cos(verticalAngle) * sin(horizontalAngle),
-		sin(verticalAngle),
-		cos(verticalAngle) * cos(horizontalAngle));
+	                 sin(verticalAngle),
+	                 cos(verticalAngle) * cos(horizontalAngle));
 }
 
 glm::vec3 Camera::right() const
@@ -96,27 +71,13 @@ glm::vec3 Camera::right() const
 	);
 }
 
-glm::vec3 Camera::up() const
-{
-	return glm::cross(right(), direction());
-}
-
 void Camera::mouseMove(int x, int y)
 {
-	if (mouseLock) {
+	if (mouseLock)
+	{
 		horizontalAngle += mouseSensitivity * float(windowWidth / 2 - x);
 		verticalAngle += mouseSensitivity * float(windowHeight / 2 - y);
 	}
-}
-
-void Camera::mouseDrag(int x, int y)
-{
-
-}
-
-void Camera::mouseClick(int button, int state, int x, int y)
-{
-
 }
 
 void Camera::mouseScroll(int button, int dir, int x, int y)
@@ -127,18 +88,11 @@ void Camera::mouseScroll(int button, int dir, int x, int y)
 void Camera::keyPressed(unsigned char key, int x, int y)
 {
 	keyStates[key] = true;
-	//  if (key == 'c') 
-	//  { 
-	//    keyStates[key] = !keyStates[key]; 
-	//  } 
 }
 
 void Camera::keyUp(unsigned char key, int x, int y)
 {
-	//  if (key != 'c')  
-	//  { 
 	keyStates[key] = false;
-	//  } 
 }
 
 void Camera::specialKeyPressed(int key, int x, int y)
@@ -177,14 +131,6 @@ void Camera::keyOperations(void)
 	{
 		mouseLock = false;
 	}
-	if (keyStates['w'])
-	{
-		wireframe = true;
-	}
-	else
-	{
-		wireframe = false;
-	}
 }
 
 void Camera::setX(float x)
@@ -200,18 +146,6 @@ void Camera::setY(float y)
 void Camera::setZ(float z)
 {
 	pos.z = z;
-}
-
-void Camera::moveY(float dir1, float dir2)
-{
-}
-
-void Camera::moveZ(float dir1, float dir2)
-{
-}
-
-void Camera::moveX(float dir1, float dir2)
-{
 }
 
 void Camera::moveUp()
@@ -288,9 +222,4 @@ float Camera::getRy()
 glm::vec3 Camera::getPosition() const
 {
 	return pos;
-}
-
-bool Camera::getWireFrameMode()
-{
-	return wireframe;
 }

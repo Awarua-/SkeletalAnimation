@@ -2,13 +2,14 @@
 // Helper functions
 //-----------------------------------------------------------------------------
 
+#pragma once
 #define aisgl_min(x,y) (x<y?x:y)
 #define aisgl_max(x,y) (y>x?y:x)
 
-void get_bounding_box_for_node (const aiScene* scene, aiNode* nd, aiVector3D* min,  aiVector3D* max, 
-	aiMatrix4x4 trafo)
+inline void get_bounding_box_for_node(const aiScene* scene, aiNode* nd, aiVector3D* min, aiVector3D* max,
+                                      aiMatrix4x4 trafo)
 {
-	aiMatrix4x4 prev = trafo;
+	auto prev = trafo;
 	unsigned int n = 0, t;
 
 	aiMultiplyMatrix4(&trafo, &nd->mTransformation);
@@ -18,8 +19,7 @@ void get_bounding_box_for_node (const aiScene* scene, aiNode* nd, aiVector3D* mi
 		const aiMesh* mesh = scene->mMeshes[nd->mMeshes[n]];
 		for (t = 0; t < mesh->mNumVertices; ++t)
 		{
-
-			aiVector3D tmp = mesh->mVertices[t];
+			auto tmp = mesh->mVertices[t];
 			aiTransformVecByMatrix4(&tmp, &trafo);
 
 			min->x = aisgl_min(min->x,tmp.x);
@@ -32,25 +32,26 @@ void get_bounding_box_for_node (const aiScene* scene, aiNode* nd, aiVector3D* mi
 		}
 	}
 
-	for (n = 0; n < nd->mNumChildren; ++n) {
-		get_bounding_box_for_node(scene, nd->mChildren[n],min,max,trafo);
+	for (n = 0; n < nd->mNumChildren; ++n)
+	{
+		get_bounding_box_for_node(scene, nd->mChildren[n], min, max, trafo);
 	}
 	trafo = prev;
 }
 
 // ----------------------------------------------------------------------------
-void get_bounding_box (const aiScene *scene, aiVector3D* min, aiVector3D* max)
+inline void get_bounding_box(const aiScene* scene, aiVector3D* min, aiVector3D* max)
 {
 	aiMatrix4x4 trafo;
 	aiIdentityMatrix4(&trafo);
 
-	min->x = min->y = min->z =  1e10f;
+	min->x = min->y = min->z = 1e10f;
 	max->x = max->y = max->z = -1e10f;
 	get_bounding_box_for_node(scene, scene->mRootNode, min, max, trafo);
 }
 
 // ----------------------------------------------------------------------------
-void color4_to_float4( aiColor4D *c, float f[4])
+inline void color4_to_float4(aiColor4D* c, float f[4])
 {
 	f[0] = c->r;
 	f[1] = c->g;
@@ -59,7 +60,7 @@ void color4_to_float4( aiColor4D *c, float f[4])
 }
 
 // ----------------------------------------------------------------------------
-void set_float4(float f[4], float a, float b, float c, float d)
+inline void set_float4(float f[4], float a, float b, float c, float d)
 {
 	f[0] = a;
 	f[1] = b;
@@ -68,42 +69,42 @@ void set_float4(float f[4], float a, float b, float c, float d)
 }
 
 // ----------------------------------------------------------------------------
-void apply_material(aiMaterial *mtl)
+inline void apply_material(aiMaterial* mtl)
 {
 	float c[4];
 
 	GLenum fill_mode;
-	int ret1, ret2;
+	int ret1;
 	aiColor4D diffuse, specular, ambient, emission;
-	float shininess, strength;
+	float shininess;
 	int two_sided;
 	int wireframe;
 	unsigned int max;
 
 	set_float4(c, 0.8f, 0.8f, 0.8f, 1.0f);
-	if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_DIFFUSE, &diffuse))
+	if (AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_DIFFUSE, &diffuse))
 		color4_to_float4(&diffuse, c);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, c);
 
 	set_float4(c, 0.0f, 0.0f, 0.0f, 1.0f);
-	if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_SPECULAR, &specular))
+	if (AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_SPECULAR, &specular))
 		color4_to_float4(&specular, c);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, c);
 
 	set_float4(c, 0.2f, 0.2f, 0.2f, 1.0f);
-	if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_AMBIENT, &ambient))
+	if (AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_AMBIENT, &ambient))
 		color4_to_float4(&ambient, c);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, c);
 
 	set_float4(c, 0.0f, 0.0f, 0.0f, 1.0f);
-	if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_EMISSIVE, &emission))
+	if (AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_EMISSIVE, &emission))
 		color4_to_float4(&emission, c);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, c);
 
 	max = 1;
 	ret1 = aiGetMaterialFloatArray(mtl, AI_MATKEY_SHININESS, &shininess, &max);
-	if(ret1 == AI_SUCCESS)
-        	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+	if (ret1 == AI_SUCCESS)
+		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
 	else
 	{
 		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
@@ -112,25 +113,25 @@ void apply_material(aiMaterial *mtl)
 	}
 
 	max = 1;
-	if(AI_SUCCESS == aiGetMaterialIntegerArray(mtl, AI_MATKEY_ENABLE_WIREFRAME, &wireframe, &max))
+	if (AI_SUCCESS == aiGetMaterialIntegerArray(mtl, AI_MATKEY_ENABLE_WIREFRAME, &wireframe, &max))
 		fill_mode = wireframe ? GL_LINE : GL_FILL;
 	else
 		fill_mode = GL_FILL;
 	glPolygonMode(GL_FRONT_AND_BACK, fill_mode);
 
 	max = 1;
-	if((AI_SUCCESS == aiGetMaterialIntegerArray(mtl, AI_MATKEY_TWOSIDED, &two_sided, &max)) && two_sided)
+	if ((AI_SUCCESS == aiGetMaterialIntegerArray(mtl, AI_MATKEY_TWOSIDED, &two_sided, &max)) && two_sided)
 		glDisable(GL_CULL_FACE);
-	else 
+	else
 		glEnable(GL_CULL_FACE);
 }
 
 
-void printSceneInfo(const aiScene* scene)
+inline void printSceneInfo(const aiScene* scene)
 {
-	if(scene != NULL)
+	if (scene != nullptr)
 	{
-		cout << "Success! "<< endl;
+		cout << "Success! " << endl;
 		cout << "---------------- Scene Data -------------------" << endl;
 		cout << "Number of animations = " << scene->mNumAnimations << endl;
 		cout << "Number of cameras = " << scene->mNumCameras << endl;
@@ -139,33 +140,33 @@ void printSceneInfo(const aiScene* scene)
 		cout << "Number of meshes = " << scene->mNumMeshes << endl;
 		cout << "Number of textures = " << scene->mNumTextures << endl;
 		cout << "--------------------------------------" << endl;
-		int nd = scene->mNumMeshes;
-		for (int n = 0; n < scene->mNumMeshes; ++n)
-		{
-			aiMesh* mesh = scene->mMeshes[n];
-			cout << "Mesh " << n << ": nverts, nfaces = " << mesh->mNumVertices << " " <<
-				mesh->mNumFaces << "  Material index = " << mesh->mMaterialIndex <<  endl;
-		}
 
+		for (auto n = 0; n < scene->mNumMeshes; ++n)
+		{
+			auto mesh = scene->mMeshes[n];
+			cout << "Mesh " << n << ": nverts, nfaces = " << mesh->mNumVertices << " " <<
+				mesh->mNumFaces << "  Material index = " << mesh->mMaterialIndex << endl;
+		}
 	}
 	else
 		cout << "=== Error:  Empty scene =====" << endl;
 }
 
 
-void printTreeInfo(const aiNode* node)
+inline void printTreeInfo(const aiNode* node)
 {
-	float* mat = new float[16];
+	// ReSharper disable once CppNonReclaimedResourceAcquisition
+	auto mat = new float[16];
 	cout << "============= Node Data ========================" << endl;
 	cout << "Number of children = " << node->mNumChildren << endl;
-	cout << "Number of meshes = " <<  node->mNumMeshes << endl;
-	for (int n = 0; n < node->mNumMeshes; n++) cout << node->mMeshes[n] << " " ;
+	cout << "Number of meshes = " << node->mNumMeshes << endl;
+	for (auto n = 0; n < node->mNumMeshes; n++) cout << node->mMeshes[n] << " ";
 	cout << endl;
-	cout << "Transformation:  " ;
-	mat = (float *)&(node->mTransformation.a1);
-	for (int n = 0; n < 16; ++n) cout << mat[n] << " " ;
+	cout << "Transformation:  ";
+	mat = const_cast<float *>(&(node->mTransformation.a1));
+	for (auto n = 0; n < 16; ++n) cout << mat[n] << " ";
 	cout << endl;
 
-	for (int n = 0; n < node->mNumChildren; n++)
+	for (auto n = 0; n < node->mNumChildren; n++)
 		printTreeInfo(node->mChildren[n]);
 }

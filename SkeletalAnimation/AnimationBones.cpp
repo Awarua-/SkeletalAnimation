@@ -23,7 +23,7 @@ Stage* stage = new Stage();
 
 
 #define HALF_WIDTH 300
-#define HALF_DEPTH 200
+#define HALF_DEPTH 300
 
 
 vector<aiVector3D> vertices = vector<aiVector3D>();
@@ -34,115 +34,21 @@ const aiScene* loadModel(const char* fileName, bool isAnimation)
 {
 	auto scene = aiImportFile(fileName, aiProcessPreset_TargetRealtime_MaxQuality);
 	if (scene == nullptr) exit(1);
-	if (isAnimation) {
+	if (isAnimation)
+	{
 		secsPerTick = scene->mAnimations[0]->mTicksPerSecond == 0.0 ? 0.02 : 1.0 / scene->mAnimations[0]->mTicksPerSecond;
 		get_bounding_box(scene, &scene_min, &scene_max);
 	}
 	for (auto i = 0; i < scene->mNumMeshes; i++)
 	{
 		auto mesh = scene->mMeshes[i];
-		for (auto j = 0; j < mesh->mNumVertices; j++) {
+		for (auto j = 0; j < mesh->mNumVertices; j++)
+		{
 			vertices.push_back(mesh->mVertices[j]);
 			normals.push_back(mesh->mNormals[j]);
 		}
 	}
 	return scene;
-}
-
-void updateVerts(const aiScene* sc) // 
-{
-//	aiMatrix4x4 m;
-	aiMesh* mesh;
-//	aiFace* face;
-	aiBone* bone;
-
-	//aiTransposeMatrix4(&m); //Convert to column-major order
-	//glPushMatrix();
-	//glMultMatrixf((float*)&m); //Multiply by the transformation matrix for this node
-	auto off = 0;
-
-	// Draw all meshes assigned to this node
-	for (auto i = 0; i < sc->mNumMeshes; i++)
-	{
-		mesh = sc->mMeshes[i];
-		for (auto j = 0; j < mesh->mNumBones; j++)
-		{
-			bone = mesh->mBones[j];
-			auto fullTransformationMatrix = bone->mOffsetMatrix;
-			auto node = sc->mRootNode->FindNode(bone->mName);
-			do
-			{
-				fullTransformationMatrix = node->mTransformation * fullTransformationMatrix;
-				node = node->mParent;
-			} while (node != nullptr);
-			auto transposeMatrix = fullTransformationMatrix;
-			transposeMatrix.Transpose();
-			transposeMatrix.Inverse();
-
-			for (auto k = 0; k < bone->mNumWeights; k++)
-			{
-				auto vid = bone->mWeights[k].mVertexId;
-				mesh->mVertices[vid] = fullTransformationMatrix * vertices[vid + off];
-				mesh->mNormals[vid] = transposeMatrix * normals[vid + off];
-			}
-		}
-
-//		apply_material(sc->mMaterials[mesh->mMaterialIndex]);
-//
-//		if (mesh->HasNormals())
-//			glEnable(GL_LIGHTING);
-//		else
-//			glDisable(GL_LIGHTING);
-//
-//
-//		if (mesh->HasVertexColors(0))
-//			glEnable(GL_COLOR_MATERIAL);
-//		else
-//			glDisable(GL_COLOR_MATERIAL);
-//
-//		//Get the polygons from each mesh and draw them
-//		for (auto k = 0; k < mesh->mNumFaces; k++)
-//		{
-//			face = &mesh->mFaces[k];
-//			GLenum face_mode;
-//
-//			switch (face->mNumIndices)
-//			{
-//			case 1: face_mode = GL_POINTS;
-//				break;
-//			case 2: face_mode = GL_LINES;
-//				break;
-//			case 3: face_mode = GL_TRIANGLES;
-//				break;
-//			default: face_mode = GL_POLYGON;
-//				break;
-//			}
-//
-//			glBegin(face_mode);
-//
-//			for (auto l = 0; l < face->mNumIndices; l++)
-//			{
-//				int index = face->mIndices[l];
-//				if (mesh->HasVertexColors(0))
-//				{
-//					glEnable(GL_COLOR_MATERIAL);
-//					glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
-//					glColor4fv(reinterpret_cast<GLfloat*>(&mesh->mColors[0][index]));
-//				}
-//				else
-//					glDisable(GL_COLOR_MATERIAL);
-//				if (mesh->HasNormals())
-//					glNormal3fv(&mesh->mNormals[index].x);
-//				glVertex3fv(&mesh->mVertices[index].x);
-//			}
-//
-//			glEnd();
-//		}
-
-		off += mesh->mNumVertices;
-	}
-
-	//glPopMatrix();
 }
 
 void initialise()
@@ -154,8 +60,7 @@ void initialise()
 	glEnable(GL_NORMALIZE);
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 	glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
-	person = loadModel("Model_Files/dwarf.x", true);
-	//thing = loadModel("Model_Files/Scene/Street_environment_V01.obj", false);
+	person = loadModel("BVH_Files\\85_03.bvh", true);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(45, 1, 1.0, 1000.0);
@@ -168,16 +73,14 @@ void initialise()
 	glutKeyboardUpFunc(Camera::keyUp);
 	glutSpecialFunc(Camera::specialKeyPressed);
 	glutSpecialUpFunc(Camera::specialKeyUp);
-	glutMotionFunc(Camera::mouseDrag);
 	glutPassiveMotionFunc(Camera::mouseMove);
-	glutMouseFunc(Camera::mouseClick);
 	glutMouseWheelFunc(Camera::mouseScroll);
 }
 
 void update(int value)
 {
 	auto anim = person->mAnimations[0];
-	for (int i = 0; i < anim->mNumChannels; i++)
+	for (auto i = 0; i < anim->mNumChannels; i++)
 	{
 		auto chnl = anim->mChannels[i];
 		auto posn = chnl->mPositionKeys[tick % chnl->mNumPositionKeys].mValue;
@@ -197,16 +100,16 @@ void update(int value)
 
 void render(const aiScene* sc, const aiNode* nd) // 
 {
-	aiMatrix4x4 m = nd->mTransformation;
+	auto m = nd->mTransformation;
 	aiMesh* mesh;
 	aiFace* face;
 
 	aiTransposeMatrix4(&m); //Convert to column-major order
 	glPushMatrix();
-	glMultMatrixf((float*)&m); //Multiply by the transformation matrix for this node
+	glMultMatrixf(reinterpret_cast<float*>(&m)); //Multiply by the transformation matrix for this node
 
-							   // Draw all meshes assigned to this node
-	for (int n = 0; n < nd->mNumMeshes; n++)
+	// Draw all meshes assigned to this node
+	for (auto n = 0; n < nd->mNumMeshes; n++)
 	{
 		mesh = sc->mMeshes[nd->mMeshes[n]];
 
@@ -217,14 +120,13 @@ void render(const aiScene* sc, const aiNode* nd) //
 		else
 			glDisable(GL_LIGHTING);
 
-
 		if (mesh->HasVertexColors(0))
 			glEnable(GL_COLOR_MATERIAL);
 		else
 			glDisable(GL_COLOR_MATERIAL);
 
 		//Get the polygons from each mesh and draw them
-		for (int k = 0; k < mesh->mNumFaces; k++)
+		for (auto k = 0; k < mesh->mNumFaces; k++)
 		{
 			face = &mesh->mFaces[k];
 			GLenum face_mode;
@@ -243,14 +145,14 @@ void render(const aiScene* sc, const aiNode* nd) //
 
 			glBegin(face_mode);
 
-			for (int i = 0; i < face->mNumIndices; i++)
+			for (auto i = 0; i < face->mNumIndices; i++)
 			{
 				int index = face->mIndices[i];
 				if (mesh->HasVertexColors(0))
 				{
 					glEnable(GL_COLOR_MATERIAL);
 					glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
-					glColor4fv((GLfloat*)&mesh->mColors[0][index]);
+					glColor4fv(reinterpret_cast<GLfloat*>(&mesh->mColors[0][index]));
 				}
 				else
 					glDisable(GL_COLOR_MATERIAL);
@@ -264,7 +166,7 @@ void render(const aiScene* sc, const aiNode* nd) //
 	}
 
 	// Draw all children
-	for (int i = 0; i < nd->mNumChildren; i++)
+	for (auto i = 0; i < nd->mNumChildren; i++)
 		render(sc, nd->mChildren[i]);
 
 	glPopMatrix();
@@ -278,11 +180,10 @@ void display()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	camera.apply();
-//	gluLookAt(0, 0, 3, 0, 0, -5, 0, 1, 0);
 	glLightfv(GL_LIGHT0, GL_POSITION, pos);
 
 	// scale the whole asset to fit into our view frustum 
-	float tmp = scene_max.x - scene_min.x;
+	auto tmp = scene_max.x - scene_min.x;
 	tmp = aisgl_max(scene_max.y - scene_min.y, tmp);
 	tmp = aisgl_max(scene_max.z - scene_min.z, tmp);
 	tmp = 1.f / tmp;
@@ -291,16 +192,12 @@ void display()
 	// center the model
 	glTranslatef(-scene_center.x, -scene_center.y, -scene_center.z);
 
-//	stage->display();
+	stage->display();
 
-	updateVerts(person);
 	render(person, person->mRootNode);
 	glPushMatrix();
 	glScalef(25, 25, 25);
-	//render(thing, thing->mRootNode);
 	glPopMatrix();
-
-
 	glutSwapBuffers();
 }
 
@@ -320,6 +217,5 @@ int main(int argc, char** argv)
 	glutMainLoop();
 
 	aiReleaseImport(person);
-	//aiReleaseImport(thing);
 	delete stage;
 }

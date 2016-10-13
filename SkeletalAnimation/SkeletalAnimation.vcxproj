@@ -23,6 +23,7 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>SkeletalAnimation</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>SkeletalAnimationBVH</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -148,49 +149,16 @@
   <ItemGroup>
     <ClCompile Include="AnimationBones.cpp" />
     <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="SceneObject.cpp" />
     <ClCompile Include="Stage.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="BVH_Files\01_01.bvh" />
     <None Include="BVH_Files\Dance.bvh" />
-    <None Include="BVH_Files\Test.bvh" />
-    <None Include="Model Files\bird.mtl" />
-    <None Include="Model Files\Car.3ds" />
-    <None Include="Model Files\dwarf.x" />
-    <None Include="Model Files\HellBoy.mtl" />
-    <None Include="Model Files\Man.3ds" />
-    <None Include="Model Files\Noodle.mtl" />
-    <None Include="Model Files\wuson.x" />
-    <None Include="Model_Files\bird.mtl" />
-    <None Include="Model_Files\Car.3ds" />
-    <None Include="Model_Files\dwarf.x" />
-    <None Include="Model_Files\HellBoy.mtl" />
-    <None Include="Model_Files\Man.3ds" />
-    <None Include="Model_Files\Noodle.mtl" />
-    <None Include="Model_Files\Scene\Street_environment_V01.FBX" />
-    <None Include="Model_Files\Scene\Street_environment_V01.max" />
-    <None Include="Model_Files\Scene\Street_environment_V01.mtl" />
-    <None Include="Model_Files\Scene\textures.rar" />
-    <None Include="Model_Files\wuson.x" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="assimp_extras.h" />
     <ClInclude Include="Camera.h" />
-    <ClInclude Include="SceneObject.h" />
     <ClInclude Include="Stage.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="Model_Files\Scene\textures\building03_c.tga" />
-    <Image Include="Model_Files\Scene\textures\building05_c.tga" />
-    <Image Include="Model_Files\Scene\textures\building_016_c.tga" />
-    <Image Include="Model_Files\Scene\textures\building_01_c.tga" />
-    <Image Include="Model_Files\Scene\textures\building_025_c.tga" />
-    <Image Include="Model_Files\Scene\textures\building_06_b.tga" />
-    <Image Include="Model_Files\Scene\textures\building_06_c.tga" />
-    <Image Include="Model_Files\Scene\textures\Building_V01_C.png" />
-    <Image Include="Model_Files\Scene\textures\Building_V02_C.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
