@@ -12,7 +12,7 @@ using namespace std;
 #include <assimp/postprocess.h>
 #include "assimp_extras.h"
 
-const aiScene* person;
+const aiScene* object;
 const aiScene* thing;
 GLuint scene_list = 0;
 aiVector3D scene_min, scene_max, scene_center;
@@ -60,7 +60,7 @@ void initialise()
 	glEnable(GL_NORMALIZE);
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 	glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
-	person = loadModel("BVH_Files\\85_03.bvh", true);
+	object = loadModel("BVH_Files\\85_03.bvh", true);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(45, 1, 1.0, 1000.0);
@@ -73,13 +73,11 @@ void initialise()
 	glutKeyboardUpFunc(Camera::keyUp);
 	glutSpecialFunc(Camera::specialKeyPressed);
 	glutSpecialUpFunc(Camera::specialKeyUp);
-	glutPassiveMotionFunc(Camera::mouseMove);
-	glutMouseWheelFunc(Camera::mouseScroll);
 }
 
 void update(int value)
 {
-	auto anim = person->mAnimations[0];
+	auto anim = object->mAnimations[0];
 	for (auto i = 0; i < anim->mNumChannels; i++)
 	{
 		auto chnl = anim->mChannels[i];
@@ -90,7 +88,7 @@ void update(int value)
 		auto matRotn3 = rotn.GetMatrix();
 		auto matRot = aiMatrix4x4(matRotn3);
 		auto matprod = matPos * matRot;
-		auto node = person->mRootNode->FindNode(chnl->mNodeName);
+		auto node = object->mRootNode->FindNode(chnl->mNodeName);
 		node->mTransformation = matprod;
 	}
 	tick = (tick + 1) % static_cast<int>(anim->mDuration);
@@ -179,7 +177,6 @@ void display()
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	camera.apply();
 	glLightfv(GL_LIGHT0, GL_POSITION, pos);
 
 	// scale the whole asset to fit into our view frustum 
@@ -187,6 +184,9 @@ void display()
 	tmp = aisgl_max(scene_max.y - scene_min.y, tmp);
 	tmp = aisgl_max(scene_max.z - scene_min.z, tmp);
 	tmp = 1.f / tmp;
+	aiVector3D root = object->mRootNode->mTransformation * object->mMeshes[0]->mVertices[0];
+	camera.apply(tmp, root);
+
 	glScalef(tmp, tmp, tmp);
 
 	// center the model
@@ -194,7 +194,7 @@ void display()
 
 	stage->display();
 
-	render(person, person->mRootNode);
+	render(object, object->mRootNode);
 	glPushMatrix();
 	glScalef(25, 25, 25);
 	glPopMatrix();
@@ -216,6 +216,6 @@ int main(int argc, char** argv)
 	glutTimerFunc(secsPerTick * 1000, update, 0);
 	glutMainLoop();
 
-	aiReleaseImport(person);
+	aiReleaseImport(object);
 	delete stage;
 }
