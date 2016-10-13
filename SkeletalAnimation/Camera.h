@@ -7,12 +7,15 @@
 // ReSharper disable once CppUnusedIncludeDirective
 #include <GL/freeglut.h>
 
+#define CDR 3.14159265 / 180.0 //Degrees to radians conversion factor
+
 class Camera
 {
 public:
 	Camera();
 	void apply(float move, aiVector3D objectPosition);
 	void keyOperations();
+	void updateAngle(float change);
 	static void keyPressed(unsigned char key, int x, int y);
 	static void keyUp(unsigned char key, int x, int y);
 	static void specialKeyPressed(int key, int x, int y);
@@ -30,6 +33,7 @@ private:
 	glm::vec3 pos;
 	glm::vec3 upVec = {0, 1, 0};
 	glm::vec3 zeroVec = {0, 0,0};
+	float viewAngle;
 	static float fov;
 	static float moveSpeed;
 	static float initialFoV;

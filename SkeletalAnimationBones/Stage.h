@@ -9,23 +9,18 @@
 // ReSharper disable once CppUnusedIncludeDirective
 #include <GL/glu.h>
 
-#define BACKGROUND_COLOUR 0.0, 0.0, 0.0, 0.0
-#define PERSPECTIVE_PROJECTION 60., 1.0, 10.0, 1000.0
-#define HALF_WIDTH 300
-#define HALF_DEPTH 200
+#define WIDTH 600
+#define DEPTH 600
+#define HALF_WIDTH WIDTH / 2
+#define HALF_DEPTH DEPTH / 2
 
 class Stage
 {
 public:
 	Stage();
-	void setAngle(int);
-	void changeCameraViewAngle(int);
 	static void display();
 
 private:
-	int cameraViewAngle;
-	int cameraAngle;
 	static void floor();
 	static void draw();
-	void drawCamera();
 };

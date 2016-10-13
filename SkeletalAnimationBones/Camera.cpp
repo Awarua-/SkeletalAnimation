@@ -1,23 +1,23 @@
 #include "Camera.h" 
+#include <iostream>
 
-float Camera::moveSpeed = 0.2;
+float Camera::moveSpeed = 1;
 
 static bool* keyStates = new bool[256];
 static bool* keySpecialStates = new bool[246];
 
-float Camera::initialFoV = 70.0f;
-float Camera::fov = initialFoV;
-
 Camera::Camera()
 {
+	viewAngle = 90;
 	pos = { 0, 0.5, 5 };
 }
 
 void Camera::apply(float move, aiVector3D objectPosition)
 {
 	keyOperations();
-
-	gluLookAt(pos[0], pos[1], pos[2], objectPosition[0] * move, objectPosition[1] * move, objectPosition[2] * move, upVec[0], upVec[1], upVec[2]);
+	auto x = 3 * cosf(float(viewAngle) * CDR);
+	auto z = 3 * sinf(float(viewAngle) * CDR);
+	gluLookAt(x, pos.y, z, objectPosition[0] * move, objectPosition[1] * move, objectPosition[2] * move, upVec.x, upVec.y, upVec.z);
 }
 
 void Camera::keyPressed(unsigned char key, int x, int y)
@@ -42,7 +42,21 @@ void Camera::specialKeyUp(int key, int x, int y)
 
 void Camera::keyOperations(void)
 {
+	if (keySpecialStates[GLUT_KEY_LEFT])
+	{
+		updateAngle(-moveSpeed);
+	}
+	if (keySpecialStates[GLUT_KEY_RIGHT])
+	{
+		updateAngle(moveSpeed);
+	}
+}
 
+void Camera::updateAngle(float change)
+{
+	viewAngle += change;
+	if (viewAngle < 0) viewAngle = 359;
+	if (viewAngle >= 360) viewAngle = 0;
 }
 
 void Camera::setX(float x)

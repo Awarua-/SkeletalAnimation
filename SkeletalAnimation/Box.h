@@ -9,18 +9,12 @@
 // ReSharper disable once CppUnusedIncludeDirective
 #include <GL/glu.h>
 
-#define WIDTH 600
-#define DEPTH 600
-#define HALF_WIDTH WIDTH / 2
-#define HALF_DEPTH DEPTH / 2
-
-class Stage
+class Box
 {
 public:
-	Stage();
+	Box();
 	static void display();
 
 private:
-	static void floor();
 	static void draw();
 };

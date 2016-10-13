@@ -2,6 +2,7 @@
 #include <GL/freeglut.h>
 #include "Camera.h"
 #include "Stage.h"
+#include "Box.h"
 #include <vector>
 
 using namespace std;
@@ -13,14 +14,13 @@ using namespace std;
 #include "assimp_extras.h"
 
 const aiScene* object;
-const aiScene* thing;
 GLuint scene_list = 0;
 aiVector3D scene_min, scene_max, scene_center;
 float secsPerTick = NULL;
 unsigned int tick = 0;
 Camera camera;
 Stage* stage = new Stage();
-
+Box* box = new Box();
 
 #define HALF_WIDTH 300
 #define HALF_DEPTH 300
@@ -60,7 +60,7 @@ void initialise()
 	glEnable(GL_NORMALIZE);
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 	glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
-	object = loadModel("BVH_Files\\85_03.bvh", true);
+	object = loadModel("BVH_Files\\81_06.bvh", true);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(45, 1, 1.0, 1000.0);
@@ -193,6 +193,8 @@ void display()
 	glTranslatef(-scene_center.x, -scene_center.y, -scene_center.z);
 
 	stage->display();
+
+	box->display();
 
 	render(object, object->mRootNode);
 	glPushMatrix();
