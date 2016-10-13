@@ -60,7 +60,7 @@ void initialise()
 	glEnable(GL_NORMALIZE);
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 	glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
-	person = loadModel("BVH_Files\\85_03.bvh", true);
+	person = loadModel("Models\\wuson.x", true);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(45, 1, 1.0, 1000.0);
@@ -93,6 +93,32 @@ void update(int value)
 		auto node = person->mRootNode->FindNode(chnl->mNodeName);
 		node->mTransformation = matprod;
 	}
+
+	auto offset = 0;
+	for (auto j = 0; j < person->mNumMeshes; j++)
+	{
+		auto mesh = person->mMeshes[j];
+		for (auto k = 0; k < mesh->mNumBones; k++)
+		{
+			auto bone = mesh->mBones[k];
+			auto node = person->mRootNode->FindNode(bone->mName);
+			auto tMatrix = bone->mOffsetMatrix;
+			while (node != nullptr)
+			{
+				tMatrix = node->mTransformation * tMatrix;
+				node = node->mParent;
+			}
+
+			for (auto l = 0; l < bone->mNumWeights; l++)
+			{
+				auto vertexId = bone->mWeights[l].mVertexId;
+				mesh->mVertices[vertexId] = tMatrix * vertices[vertexId + offset];
+				mesh->mNormals[vertexId] = tMatrix * normals[vertexId + offset];
+			}
+		}
+		offset += mesh->mNumVertices;
+	}
+
 	tick = (tick + 1) % static_cast<int>(anim->mDuration);
 	glutPostRedisplay();
 	glutTimerFunc(secsPerTick * 1000, update, 0);
@@ -194,7 +220,11 @@ void display()
 
 	stage->display();
 
+	glPushMatrix();
+	glRotatef(90, 1, 0, 0);
 	render(person, person->mRootNode);
+	glPopMatrix();
+
 	glPushMatrix();
 	glScalef(25, 25, 25);
 	glPopMatrix();
@@ -207,7 +237,7 @@ int main(int argc, char** argv)
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitWindowSize(600, 600);
-	glutCreateWindow("Assimp Test");
+	glutCreateWindow("Skeletal Animation Bones");
 	glutInitContextVersion(4, 2);
 	glutInitContextProfile(GLUT_CORE_PROFILE);
 

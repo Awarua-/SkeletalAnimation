@@ -68,7 +68,7 @@ void Stage::floor()
 	glNormal3f(0.0, 1.0, 0.0);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, black); //No specular reflections from the floor.
 
-	//The floor is made up of several tiny squares on a 300x300 grid. Each square has a unit size.
+	//The floor is made up of several tiny squares on a 200x200 grid. Each square has a unit size.
 	glBegin(GL_QUADS);
 	for (auto i = -HALF_WIDTH; i < HALF_WIDTH; i++)
 	{
